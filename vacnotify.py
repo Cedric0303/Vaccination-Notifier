@@ -11,12 +11,13 @@ print("Configuring script...")
 CHECK_REPEATEDLY = True
 
 # if you set the script to check repeatedly above, you can configure the delay
-# between WAM checks in minutes here
+# between vaccination status checks in minutes here
 DELAY_BETWEEN_CHECKS = 180 # minutes
 
 # leave these lines unchanged to be prompted for your username and password
 # every time you run the script, or just hard code your credentials here if
 # you"re lazy (but then be careful not to let anyone else see this file)
+print("Username can be either your phone number or email address.")
 MYSEJAHTERA_USERNAME = input("Username: ")
 MYSEJAHTERA_PASSWORD = getpass.getpass()
 # MYSEJAHTERA_USERNAME = "<INSERT USERNAME HERE>"
@@ -110,7 +111,7 @@ NOTIFIER.add_notifier(SMTPGmailNotifier(
 def main():
     NOTIFIER.notify(*messages.hello_message(delay=DELAY_BETWEEN_CHECKS))
     
-    # conduct the first check! don"t catch any exceptions here, if the check
+    # conduct the first check! don't catch any exceptions here, if the check
     # fails this first time, it"s likely to be a configuration problem (e.g.
     # wrong username/password) so we should crash the script to let the user
     # know.
@@ -135,7 +136,7 @@ def poll_and_notify():
     """
     Check for updated results, and send a notification if a change is detected.
     """
-    # check the results page for the latest results
+    # query the API for the latest result
     new_results = get_status(MYSEJAHTERA_USERNAME, MYSEJAHTERA_PASSWORD)
     # load the previous results from file
     try:
@@ -148,24 +149,26 @@ def poll_and_notify():
             'Health Facility:': '',
             'Vaccination Location:': '',
             'Date:': '',
-            'Time:': '',}
+            'Time:': ''}
 
-    # compare the results for each degree:
-    if new_results and old_results != new_results:
-        # compute difference, and send notification
+    if new_results == "DONE":
+        print("Congratulations, you have received all your vaccinations.")
+        return
+    
+    # compare the results:
+    elif new_results and old_results != new_results:
+        # send notification
         print("Found updated results for your vaccination.")
-        # for key, value in new_results.items():
-        #     print(key, value)
         NOTIFIER.notify(*messages.update_message(new_results))
+        # update the results file for next time
+        with open(RESULTS_FILENAME, "w") as resultsfile:
+            json.dump(new_results, resultsfile, indent=2)
+
     else:
-        # no change to results for this degree. ignore it!
-        print("No changes to your vaccination.")
+        # no change to results to vaccination status. ignore it!
+        print("No changes to your vaccination status.")
         for key, value in old_results.items():
             print(key, value)
-
-    # update the results file for next time
-    with open(RESULTS_FILENAME, "w") as resultsfile:
-        json.dump(new_results, resultsfile, indent=2)
 
 
 class InvalidLoginException(Exception):
@@ -192,18 +195,31 @@ def get_status(username, password):
             headers={"x-auth-token": dict(response.headers)["X-AUTH-TOKEN"]})
         
         stages = response.json()
+        
+        first_done = False
+
         for stage in stages:
             stage_fields = dict(stage)
             stage_name = stage_fields["headerText"]["en_US"]
             stage_state = stage_fields["state"]
 
-            if stage_name == "Registered" and stage_state == "PENDING":
-                raise InvalidVaccinationException("You have not registered for the vaccine.")
-            if stage_name == "1st Dose appointment" and stage_state == "ACTIVE":
-                data_dict = dict()
-                for each in stage_fields['data']:
-                    data_dict[each['text']['en_US']] = each['value']
-                return data_dict
+            if not first_done:
+                if stage_name == "Registered" and stage_state == "PENDING":
+                    raise InvalidVaccinationException("You have not registered for the vaccine.")
+                if stage_name == "1st Dose appointment":
+                    if stage_state == "ACTIVE":
+                        data_dict = {each['text']['en_US']: each['value'] for each in stage_fields['data']}
+                        return data_dict
+                    elif stage_state == "COMPLETED":
+                        first_done = True
+            
+            if first_done:
+                if stage_name == "2nd Dose appointment":
+                    if stage_state == "ACTIVE":
+                        data_dict = {each['text']['en_US']: each['value'] for each in stage_fields['data']}
+                        return data_dict
+                    elif stage_state == "COMPLETED":
+                        return "DONE"
         return False
 
 
