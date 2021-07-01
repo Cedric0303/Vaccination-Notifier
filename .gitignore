@@ -3,5 +3,3 @@ results.txt
 # gmail oauth secrets
 gmail-credentials.json
 gmail-token.pickle
-# legacy
-wam.txt

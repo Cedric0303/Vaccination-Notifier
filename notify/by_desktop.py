@@ -14,7 +14,7 @@ class DesktopNotifier:
     """
     def __init__(self) -> None:
         print("Configuring Desktop Notifier...")
-        notify2.init("UoM-WAM-Spam")
+        notify2.init("Vaccination-Notifier")
         self.notification = notify2.Notification
         self.timeout = notify2.EXPIRES_NEVER
 

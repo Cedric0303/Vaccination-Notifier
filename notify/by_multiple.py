@@ -14,13 +14,13 @@ class MultiNotifier:
     def add_notifier(self, notifier):
         self.notifiers.append(notifier)
 
-    def notify(self, subject: str, text: str) -> None:
+    def notify(self, key: str, value: str) -> None:
         print("Triggering all notification methods...")
         problems = []
         nsuccess, nfail = 0, 0
         for notifier in self.notifiers:
             try:
-                notifier.notify(subject, text)
+                notifier.notify(key, value)
                 nsuccess += 1
             except Exception as e:
                 problems.append((notifier, e))

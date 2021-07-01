@@ -11,13 +11,13 @@ class IFTTTWebhookNotifier:
     """
     Send notification using IFTTT WebHook.
 
-    Messages will be sent in "wam-spam" event, with "value1" as the title,
+    Messages will be sent in "vac-notify" event, with "value1" as the title,
     and "value2" as the body text.
     """
 
     def __init__(self, key: str) -> None:
         print("Configuring IFTTT Webhook Notifier...")
-        self.entry_point = f"https://maker.ifttt.com/trigger/wam-spam/with/key/{key}"
+        self.entry_point = f"https://maker.ifttt.com/trigger/vac-notify/with/key/{key}"
 
     def notify(self, subject: str, text: str) -> None:
         print("Triggering IFTTT webhook...")
