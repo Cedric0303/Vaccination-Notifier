@@ -1,6 +1,6 @@
 # Vaccination Notifier
 
-This script periodically checks the mysejahtera api for
+This script periodically checks the MySejahtera API for
 any changes to your vacination status, and sends you a notification
 when a change is detected.
 
