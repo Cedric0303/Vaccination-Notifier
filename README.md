@@ -9,6 +9,8 @@ blueset, josephsurin, alanung, and abhinavcreed13 as a [UoM WAM Spammer](https:/
 
 Modified by Cedric0303 to work on MySejahtera API for vaccination notifications.
 
+Details involving accessing MySejahtera API came from [nakvaksin](https://github.com/nubpro/nakvaksin).
+
 
 ## Installation
 
